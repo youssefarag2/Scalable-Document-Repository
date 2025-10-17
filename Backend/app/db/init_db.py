@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.user import Department
+from app.models.department import Department
 
 
 def seed_departments(db: Session):
