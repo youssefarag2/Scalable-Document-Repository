@@ -82,3 +82,36 @@ def create_document_with_v1(
     db.refresh(doc)
     db.refresh(v1)
     return doc, v1, tags
+
+
+
+def user_can_view_document(db: Session, document_id: int, user_department_id: Optional[int]) -> bool:
+    if not user_department_id:
+        return False
+    exists = (
+        db.query(DocumentPermission)
+        .filter(
+            DocumentPermission.document_id == document_id,
+            DocumentPermission.department_id == user_department_id,
+            DocumentPermission.can_view == 1,
+        )
+        .first()
+        is not None
+    )
+    return exists
+
+
+def get_document_or_404(db: Session, document_id: int) -> Document:
+    doc = db.query(Document).get(document_id)
+    if not doc:
+        raise ValueError("not_found")
+    return doc
+
+
+def get_versions_for_document(db: Session, document_id: int) -> List[DocumentVersion]:
+    return (
+        db.query(DocumentVersion)
+        .filter(DocumentVersion.document_id == document_id)
+        .order_by(DocumentVersion.version_number.desc())
+        .all()
+    )

@@ -24,3 +24,19 @@ class DocumentDetail(BaseModel):
     current_version_number: int
     tags: List[str]
     owner_id: Optional[int]
+
+class DocumentVersionInfo(BaseModel):
+    id: int
+    version_number: int
+    uploaded_by_name: Optional[str]
+    uploaded_at: Optional[str]
+    file_size: Optional[int]
+    mime_type: Optional[str]
+
+class DocumentDetail(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    current_version_number: int
+    tags: List[str]
+    owner_id: Optional[int]

@@ -5,8 +5,9 @@ from sqlalchemy import and_
 from app.api.deps import get_db_dep, get_current_user
 from app.models.user import User
 from app.models.document import Document, DocumentVersion, Tag, DocumentPermission
-from app.schemas.documents import DocumentCreateForm, DocumentSummary
-from app.services.documents import parse_csv, create_document_with_v1
+from app.schemas.documents import DocumentCreateForm, DocumentSummary, DocumentDetail, DocumentVersionInfo
+from app.services.documents import parse_csv, create_document_with_v1, user_can_view_document, get_document_or_404, get_versions_for_document
+
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -80,3 +81,48 @@ def list_accessible_documents(
             )
         )
     return results
+
+
+@router.get("/{document_id}", response_model=DocumentDetail)
+def get_document_detail(
+    document_id: int,
+    db: Session = Depends(get_db_dep),
+    current_user: User = Depends(get_current_user),
+) -> DocumentDetail:
+    doc = get_document_or_404(db, document_id)
+    # Owner can always view; otherwise check department permission
+    if doc.owner_id != current_user.id and not user_can_view_document(db, document_id, current_user.department_id):
+        raise HTTPException(status_code=403, detail="Not authorized to view this document")
+
+    return DocumentDetail(
+        id=doc.id,
+        title=doc.title,
+        description=doc.description,
+        current_version_number=doc.current_version_number,
+        tags=[t.name for t in doc.tags],
+        owner_id=doc.owner_id,
+    )
+
+
+@router.get("/{document_id}/versions", response_model=List[DocumentVersionInfo])
+def get_document_versions(
+    document_id: int,
+    db: Session = Depends(get_db_dep),
+    current_user: User = Depends(get_current_user),
+) -> List[DocumentVersionInfo]:
+    doc = get_document_or_404(db, document_id)
+    if doc.owner_id != current_user.id and not user_can_view_document(db, document_id, current_user.department_id):
+        raise HTTPException(status_code=403, detail="Not authorized to view versions")
+
+    versions = get_versions_for_document(db, document_id)
+    return [
+        DocumentVersionInfo(
+            id=v.id,
+            version_number=v.version_number,
+            uploaded_by_name=v.uploaded_by_name,
+            uploaded_at=v.uploaded_at.isoformat() if v.uploaded_at else None,
+            file_size=v.file_size,
+            mime_type=v.mime_type,
+        )
+        for v in versions
+    ]
