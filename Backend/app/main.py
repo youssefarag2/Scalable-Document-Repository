@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
 from app.db.migrate import init_db
+from app.api.routes import auth as auth_routes
 
 app = FastAPI(title="Scalable Document Repository")
 
@@ -17,6 +18,7 @@ app.add_middleware(
 def on_startup():
     init_db()
 
+app.include_router(auth_routes.router)
 
 @app.get("/health")
 def health():

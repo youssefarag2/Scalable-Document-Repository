@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from app.core.settings import settings
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 ALGORITHM = "HS256"
 
 def hash_password(plain_password:str) -> str:
@@ -20,12 +20,15 @@ def create_access_token(claims: Dict[str, Any], expires_minutes: Optional[int] =
     expire = datetime.now(tz=timezone.utc) + timedelta(
         minutes=expires_minutes or settings.access_token_expire_minutes
     )
-    to_encode = {**claims, "exp": expire, "iat": datetime.now(tz=timezone.utc)}
+    to_encode = dict(claims)
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
+    to_encode.update({"exp": expire, "iat": datetime.now(tz=timezone.utc)})
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
 def decode_token(token: str) -> Dict[str, Any]:
     try:
-        return jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+        return jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM],  options={"verify_aud": False})
     except JWTError as e:
         raise ValueError("Invalid token") from e
