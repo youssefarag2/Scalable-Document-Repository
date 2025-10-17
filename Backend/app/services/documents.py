@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app.models.document import Document, DocumentVersion, Tag, DocumentPermission
 from app.models.user import User
@@ -100,6 +101,20 @@ def user_can_view_document(db: Session, document_id: int, user_department_id: Op
     )
     return exists
 
+def user_can_download_document(db: Session, document_id: int, user_department_id: Optional[int]) -> bool:
+    if not user_department_id:
+        return False
+    return (
+        db.query(DocumentPermission)
+        .filter(
+            DocumentPermission.document_id == document_id,
+            DocumentPermission.department_id == user_department_id,
+            DocumentPermission.can_download == 1,
+        )
+        .first()
+        is not None
+    )
+
 
 def get_document_or_404(db: Session, document_id: int) -> Document:
     doc = db.query(Document).get(document_id)
@@ -115,3 +130,81 @@ def get_versions_for_document(db: Session, document_id: int) -> List[DocumentVer
         .order_by(DocumentVersion.version_number.desc())
         .all()
     )
+
+def resolve_version(db: Session, document: Document, which: Optional[str]) -> DocumentVersion:
+    if which in (None, "", "latest"):
+        vnum = document.current_version_number
+    else:
+        try:
+            vnum = int(which)
+        except ValueError:
+            raise ValueError("bad_version")
+    v = (
+        db.query(DocumentVersion)
+        .filter(
+            DocumentVersion.document_id == document.id,
+            DocumentVersion.version_number == vnum,
+        )
+        .first()
+    )
+    if not v:
+        raise ValueError("not_found")
+    return v
+
+def can_upload_new_version(doc: Document, user: User) -> bool:
+    if doc.owner_id == user.id:
+        return True
+    return bool(user.department_id and doc.owner and doc.owner.department_id == user.department_id)
+
+
+def add_new_version(
+    db: Session, doc: Document, user: User, upload_file
+) -> DocumentVersion:
+    new_version = (doc.current_version_number or 0) + 1
+    file_path, file_size, mime = save_upload_for_version(doc.id, new_version, upload_file)
+    v = DocumentVersion(
+        document_id=doc.id,
+        version_number=new_version,
+        file_path=file_path,
+        mime_type=mime,
+        file_size=file_size,
+        uploaded_by=user.id,
+        uploaded_by_name=user.name,
+    )
+    db.add(v)
+    doc.current_version_number = new_version
+    db.commit()
+    db.refresh(v)
+    db.refresh(doc)
+    return v
+
+def replace_document_metadata(
+    db: Session,
+    doc: Document,
+    title: Optional[str],
+    description: Optional[str],
+    tag_names: Optional[List[str]],
+    permission_department_ids: Optional[List[int]],
+) -> None:
+    if title is not None:
+        doc.title = title
+    if description is not None:
+        doc.description = description
+
+    if tag_names is not None:
+        tags = get_or_create_tags(db, tag_names)
+        doc.tags = tags
+
+    if permission_department_ids is not None:
+        db.query(DocumentPermission).filter(DocumentPermission.document_id == doc.id).delete(synchronize_session=False)
+        db.flush()
+        if permission_department_ids:
+            for dep_id in permission_department_ids:
+                db.add(
+                    DocumentPermission(
+                        document_id=doc.id, department_id=dep_id, can_view=1, can_download=1
+                    )
+                )
+
+    db.commit()
+    db.refresh(doc)

@@ -40,3 +40,9 @@ class DocumentDetail(BaseModel):
     current_version_number: int
     tags: List[str]
     owner_id: Optional[int]
+
+class DocumentUpdateRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=255)
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    permission_department_ids: Optional[List[int]] = None
