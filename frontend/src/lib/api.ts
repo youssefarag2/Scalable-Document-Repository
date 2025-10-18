@@ -110,3 +110,28 @@ export async function uploadDocument(form: FormData) {
     });
     return res.data as DocSummary;
 }
+
+export async function getDocument(id: number) {
+	const res = await api.get(`/api/documents/${id}`);
+	return res.data as { id: number; title: string; description?: string; current_version_number: number; tags: string[]; owner_id?: number };
+  }
+  
+export async function downloadVersion(documentId: number, version: number | "latest") {
+	const res = await api.get(`/api/documents/${documentId}/download?version=${version}`, { responseType: "blob" });
+	const disp = res.headers["content-disposition"] as string | undefined;
+	let filename = "download";
+	if (disp) { const m = /filename="?([^"]+)"?/i.exec(disp); if (m?.[1]) filename = m[1]; }
+	return { blob: res.data as Blob, filename };
+}
+  
+export async function uploadNewVersion(documentId: number, file: File) {
+	const fd = new FormData();
+	fd.append("file", file);
+	const res = await api.post(`/api/documents/${documentId}/version`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+	return res.data;
+}
+  
+export async function updateDocument(id: number, payload: { title?: string; description?: string; tags?: string[]; permission_department_ids?: number[] }) {
+	const res = await api.put(`/api/documents/${id}`, payload);
+	return res.data;
+}
