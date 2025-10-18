@@ -98,3 +98,15 @@ export async function getTags() {
     const res = await api.get("/api/tags");
     return res.data as Array<{ id: number; name: string }>;
   }
+
+export async function listMyDocs() {
+    const res = await api.get("/api/users/me/documents");
+    return res.data as DocSummary[];
+}
+  
+export async function uploadDocument(form: FormData) {
+    const res = await api.post("/api/documents/upload", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data as DocSummary;
+}
