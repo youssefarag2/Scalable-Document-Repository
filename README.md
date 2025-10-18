@@ -6,7 +6,7 @@ End-to-end demo of a secure, scalable document repository with versioning, tags,
 - Frontend: Next.js (App Router, TypeScript, Tailwind)
 - Backend: FastAPI (Python), SQLAlchemy, Pydantic
 - Database: PostgreSQL (via Docker Compose)
-- Auth: JWT (HS256), Argon2 password hashing
+- Auth: JWT (HS256), HS256 password hashing
 - Storage: Local disk under `Backend/storage/` (swappable to S3 later)
 
 ---
