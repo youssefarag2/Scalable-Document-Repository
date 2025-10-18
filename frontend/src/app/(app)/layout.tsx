@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 		return <div className="min-h-screen flex items-center justify-center text-slate-600">Loading...</div>;
 	}
 	return (
-		<div className="min-h-screen flex">
+		<div className="min-h-screen flex bg-gray-50">
 			<Sidebar user={user!} onLogout={onLogout} />
 			<main className="flex-1 p-6">{children}</main>
 		</div>
