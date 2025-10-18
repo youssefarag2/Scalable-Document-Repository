@@ -113,7 +113,17 @@ export async function uploadDocument(form: FormData) {
 
 export async function getDocument(id: number) {
 	const res = await api.get(`/api/documents/${id}`);
-	return res.data as { id: number; title: string; description?: string; current_version_number: number; tags: string[]; owner_id?: number };
+	return res.data as {
+	  id: number;
+	  title: string;
+	  description?: string;
+	  current_version_number: number;
+	  tags: string[];
+	  owner_id?: number;
+	  owner_department_id?: number;
+	  can_upload_version: boolean;  
+	  can_edit_metadata: boolean;   
+	};
   }
   
 export async function downloadVersion(documentId: number, version: number | "latest") {

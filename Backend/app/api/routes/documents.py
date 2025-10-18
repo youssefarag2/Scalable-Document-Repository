@@ -160,8 +160,12 @@ def get_document_detail(
     current_user: User = Depends(get_current_user),
 ) -> DocumentDetail:
     doc = get_document_or_404(db, document_id)
-    # Owner can always view; otherwise check department permission
-    if doc.owner_id != current_user.id and not user_can_view_document(db, document_id, current_user.department_id):
+
+    is_owner = (doc.owner_id == current_user.id)
+    owner_dept_id = doc.owner.department_id if doc.owner else None
+    same_department = bool(current_user.department_id and owner_dept_id and current_user.department_id == owner_dept_id)
+
+    if not (is_owner or user_can_view_document(db, document_id, current_user.department_id)):
         raise HTTPException(status_code=403, detail="Not authorized to view this document")
 
     return DocumentDetail(
@@ -171,7 +175,11 @@ def get_document_detail(
         current_version_number=doc.current_version_number,
         tags=[t.name for t in doc.tags],
         owner_id=doc.owner_id,
+        owner_department_id=owner_dept_id,
+        can_upload_version=(is_owner or same_department),
+        can_edit_metadata=is_owner,
     )
+
 
 
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionInfo])
@@ -265,6 +273,12 @@ def update_document_metadata(
         permission_department_ids=(payload.permission_department_ids or None),
     )
 
+    is_owner = (doc.owner_id == current_user.id)
+    owner_dept_id = doc.owner.department_id if doc.owner else None
+    same_department = bool(
+        current_user.department_id and owner_dept_id and current_user.department_id == owner_dept_id
+    )
+
     return DocumentDetail(
         id=doc.id,
         title=doc.title,
@@ -272,6 +286,9 @@ def update_document_metadata(
         current_version_number=doc.current_version_number,
         tags=[t.name for t in doc.tags],
         owner_id=doc.owner_id,
+        owner_department_id=owner_dept_id,
+        can_upload_version=(is_owner or same_department),
+        can_edit_metadata=is_owner,
     )
 
 

@@ -40,6 +40,9 @@ class DocumentDetail(BaseModel):
     current_version_number: int
     tags: List[str]
     owner_id: Optional[int]
+    owner_department_id: Optional[int] = None          
+    can_upload_version: bool = False                    
+    can_edit_metadata: bool  = False                    
 
 class DocumentUpdateRequest(BaseModel):
     title: Optional[str] = Field(default=None, max_length=255)

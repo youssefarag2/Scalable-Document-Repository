@@ -26,6 +26,8 @@ export default function DocumentDetailPage() {
   const [ownerId, setOwnerId] = useState<number | undefined>(undefined);
   const [deptIds, setDeptIds] = useState<number[]>([]);
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [canUploadVersion, setCanUploadVersion] = useState(false);
+  const [canEditMetadata, setCanEditMetadata] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -37,6 +39,8 @@ export default function DocumentDetailPage() {
       setTags(d.tags);
       setCurrentVersion(d.current_version_number);
       setOwnerId(d.owner_id);
+      setCanUploadVersion(!!d.can_upload_version);
+      setCanEditMetadata(!!d.can_edit_metadata);
       // permissions are not returned by details; leave editable via deptIds if you like (optional fetch later)
       const vs = await getVersions(docId);
       setVersions(vs);
@@ -131,15 +135,19 @@ export default function DocumentDetailPage() {
               </div>
             ))}
           </div>
-          <form onSubmit={onUploadNewVersion} className="mt-4 space-y-2">
-            <label className="text-sm font-medium text-slate-700">Upload new version</label>
-            <input type="file" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm" />
-            <Button type="submit" disabled={uploading || !newFile}>{uploading ? "Uploading..." : "Upload"}</Button>
-          </form>
+          {canUploadVersion && (
+              <form onSubmit={onUploadNewVersion} className="mt-4 space-y-2">
+              <label className="text-sm font-medium text-slate-700">Upload new version</label>
+              <input type="file" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm" />
+              <Button type="submit" disabled={uploading || !newFile}>{uploading ? "Uploading..." : "Upload"}</Button>
+            </form>
+          )}
+       
         </div>
 
         {/* Metadata (owner-only on backend; FE shows form always, backend enforces) */}
-        <form onSubmit={onSaveMetadata} className="rounded-xl border border-slate-200 bg-white p-4 shadow space-y-3">
+        {canEditMetadata && (
+          <form onSubmit={onSaveMetadata} className="rounded-xl border border-slate-200 bg-white p-4 shadow space-y-3">
           <h2 className="text-lg font-semibold text-slate-900">Edit metadata</h2>
           <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
           <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -147,6 +155,8 @@ export default function DocumentDetailPage() {
           <DeptMultiSelect value={deptIds} onChange={setDeptIds} />
           <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
         </form>
+        )}
+       
       </div>
     </div>
   );
