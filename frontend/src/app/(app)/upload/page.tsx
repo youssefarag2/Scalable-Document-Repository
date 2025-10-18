@@ -59,7 +59,26 @@ export default function UploadPage() {
         <DeptMultiSelect value={deptIds} onChange={setDeptIds} />
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-slate-700">File</label>
-          <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm" required />
+          <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor="upload-file"
+              className="cursor-pointer inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm hover:bg-slate-50 text-black"
+            >
+              Choose file
+            </label>
+            <span className="text-sm text-slate-700">
+              {file ? file.name : "No file selected"}
+            </span>
+          </div>
+          <input
+            id="upload-file"
+            type="file"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            required
+          />
+        </div>
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <Button type="submit" disabled={loading}>{loading ? "Uploading..." : "Upload"}</Button>

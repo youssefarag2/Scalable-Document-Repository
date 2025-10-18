@@ -12,7 +12,8 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en">
-<body className={`${inter.className} min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50 text-slate-800 antialiase`}>				{children}
+			<body className={`${inter.className} min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50 text-slate-900 antialiased`}>
+			{children}
 			</body>
 		</html>
 	);

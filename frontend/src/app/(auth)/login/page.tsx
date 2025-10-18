@@ -43,7 +43,7 @@ export default function LoginPage() {
           className="rounded"
           priority
         />
-        <span className="text-lg font-semibold text-slate-900">Document Repository</span>
+        <span className="text-lg font-semibold text-slate-900">Documents Repository</span>
       </div>
 			<form onSubmit={onSubmit} className="space-y-4">
 				<Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

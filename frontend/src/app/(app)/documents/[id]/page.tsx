@@ -136,12 +136,30 @@ export default function DocumentDetailPage() {
             ))}
           </div>
           {canUploadVersion && (
-              <form onSubmit={onUploadNewVersion} className="mt-4 space-y-2">
-              <label className="text-sm font-medium text-slate-700">Upload new version</label>
-              <input type="file" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm" />
-              <Button type="submit" disabled={uploading || !newFile}>{uploading ? "Uploading..." : "Upload"}</Button>
-            </form>
-          )}
+  <form onSubmit={onUploadNewVersion} className="mt-4 space-y-3">
+    <label className="text-sm font-medium text-slate-700">Upload new version</label>
+    <div className="flex items-center gap-3">
+      <label
+        htmlFor="new-version-file"
+        className="cursor-pointer inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 shadow-sm hover:bg-slate-50 text-black"
+      >
+        Choose file
+      </label>
+      <span className="text-sm text-slate-700">
+        {newFile ? newFile.name : "No file selected"}
+      </span>
+    </div>
+    <input
+      id="new-version-file"
+      type="file"
+      className="hidden"
+      onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+    />
+    <Button type="submit" disabled={uploading || !newFile}>
+      {uploading ? "Uploading..." : "Upload"}
+    </Button>
+  </form>
+)}
        
         </div>
 
